@@ -11,6 +11,7 @@ from kami_pricing.constant import (
     COLUMNS_DIFERENCE,
     COLUMNS_EXCEPT_HAIRPRO,
     GOOGLE_API_CREDENTIALS,
+    ID_HAIRPRO_SHEET,
 )
 
 pricing_logger = logging.getLogger('pricing')
@@ -213,19 +214,14 @@ class Pricing:
             api_version='v4',
             credentials_path=GOOGLE_API_CREDENTIALS,
         )
-        kg.clear_range(
-            '1u7dCTQzbqgKSSjpSVtsUl7ea2j2YgW4Ko2nB9akE1ws', 'ebit!A2:B'
-        )
+        kg.clear_range(ID_HAIRPRO_SHEET, 'ebit!A2:B')
 
         df = df[['sku (*)', 'special_price']]
 
-        kg.append_dataframe(
-            df, '1u7dCTQzbqgKSSjpSVtsUl7ea2j2YgW4Ko2nB9akE1ws', 'ebit!A2:B'
-        )
+        kg.append_dataframe(df, ID_HAIRPRO_SHEET, 'ebit!A2:B')
         df_ebitda = kg.convert_range_to_dataframe(
-            '1u7dCTQzbqgKSSjpSVtsUl7ea2j2YgW4Ko2nB9akE1ws', 'ebit!A1:E'
+            ID_HAIRPRO_SHEET, 'ebit!A1:E'
         )
-
         df_ebitda = df_ebitda.replace('None', np.nan)
 
         numeric_columns = ['special_price', 'CUSTO', 'FRETE', 'INSUMO']
@@ -244,7 +240,7 @@ class Pricing:
         )
 
         df_active = kg.convert_range_to_dataframe(
-            '1u7dCTQzbqgKSSjpSVtsUl7ea2j2YgW4Ko2nB9akE1ws', 'sku!A1:B'
+            ID_HAIRPRO_SHEET, 'pricing_teste!A1:B'
         )
 
         df_inactives = df_active.loc[df_active['status'] == 'INATIVO']

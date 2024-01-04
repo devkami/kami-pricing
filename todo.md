@@ -23,3 +23,21 @@
 > - KAMI CO 2 -> The Best
 
 ### Implementar aumento de preço
+
+### Analise Requisitos - Valéria:
+
+#### Incluir Novo Produto:
+
+- Incluir a URL na aba de pricing
+- atualiza a lista de 'de-para' sku_tiny:sku_beleza
+- consulta e inclui (caso necessário) na planilha de pdv: https://docs.google.com/spreadsheets/d/15OwdzTMWAhOsOo8b8Bf9yqVpFbaBKpRAPR6_13WIQBw/edit?pli=1#gid=1894741478 (Responsavel: Valeria, Evelyn ou Isa)
+- Conferir se o produto saiu na ultima atualização do pricing
+
+#### Novas Features:
+
+- [X] Incluir o SKU na planilha de URL's
+- [X] Planilha de ativação: https://docs.google.com/spreadsheets/d/1nz-w24g67VnONFMAgDQKx6ZOE1w_J_tNBRDES-vTLSs/edit#gid=0
+- [X] Integrar todas aas informações do produto em uma única planilha (pricing, skushairpro, sku *ativo/inativo*)
+- Criar Precificação Agendada, que executa no tempo determinado e após volta ao valor original
+
+### Analise Requisitos - Jacque:
