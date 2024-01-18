@@ -1,10 +1,20 @@
+import json
 import os
 
 SOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(SOURCE_DIR + '/../')
 ID_HAIRPRO_SHEET = '1hoMQoRXGcWJvxVwjAY8eTYiLk778Id5ee_RKaZqAbmU'
 GOOGLE_API_CREDENTIALS = os.path.join(ROOT_DIR, 'credentials/google_api.json')
-PRICING_MANAGER_FILE = os.path.join(ROOT_DIR, 'settings/pricing_manager.json')
+PRICING_SETTINGS_FILE = os.path.join(ROOT_DIR, 'settings/pricing_manager.json')
+
+
+def get_json_manager(file_path):
+    with open(file_path, 'r') as file:
+        pricing_settings = json.load(file)
+        return pricing_settings.get('manager', None)
+
+
+PRICING_MANAGER_JSON = get_json_manager(PRICING_SETTINGS_FILE)
 COLUMNS_ALL_SELLER = [
     'sku',
     'brand',
