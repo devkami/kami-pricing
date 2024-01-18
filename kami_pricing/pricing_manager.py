@@ -1,7 +1,8 @@
 import json
 import logging
+from dataclasses import dataclass, field
 from os import path
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import pandas as pd
 from kami_gsuite.kami_gsheet import KamiGsheet
@@ -17,7 +18,6 @@ from kami_pricing.constant import (
 from kami_pricing.pricing import Pricing
 from kami_pricing.scraper import Scraper
 
-gsheet = KamiGsheet(api_version='v4', credentials_path=GOOGLE_API_CREDENTIALS)
 pricing_logger = logging.getLogger('Pricing Manager')
 
 
@@ -25,57 +25,75 @@ class PricingManagerError(Exception):
     pass
 
 
+@dataclass
 class PricingManager:
-    def __init__(
-        self,
-        company: str = 'HAIRPRO',
-        marketplace: str = 'BELEZA_NA_WEB',
-        integrator: str = 'PLUGG_TO',
-        products_ulrs_sheet_name: str = 'pricing_teste',
-        skus_sellers_sheet_name: str = 'skushairpro',
-    ):
-        self.company = company
-        self.marketplace = marketplace
-        self.products_ulrs_sheet_name = products_ulrs_sheet_name
-        self.skus_sellers_sheet_name = skus_sellers_sheet_name
-        self.integrator = integrator
-        self.integrator_api = None
+    company: str = ('HAIRPRO',)
+    marketplace: str = ('BELEZA_NA_WEB',)
+    integrator: str = ('ANYMARKET',)
+    integrator_api = None
+    gsheet: KamiGsheet = field(init=False)
+    gsheet_id: str = (ID_HAIRPRO_SHEET,)
+    gsheet_name: str = ('pricing',)
+    pricing_engine: Pricing = field(default_factory=Pricing)
+
+    def __post_init__(self):
+        self.gsheet = KamiGsheet(
+            credentials_path=GOOGLE_API_CREDENTIALS, api_version='v4'
+        )
+        self._set_integrator_api()
+        self.pricing = Pricing(**self.pricing_engine)
 
     @classmethod
-    def from_json(cls, file_path: str):
-        with open(file_path, 'r') as file:
-            json_data = json.load(file)
+    def from_json(cls, json_data: Union[str, dict]):
+        if isinstance(json_data, str) and path.isfile(json_data):
+            try:
+                json_data = cls._load_json_from_file(json_data)
+            except PricingManagerError as e:
+                raise e
+        elif isinstance(json_data, str):
+            try:
+                json_data = cls._load_json_from_string(json_data)
+            except PricingManagerError as e:
+                raise e
+        elif isinstance(json_data, dict):
+            pass
+        else:
+            raise PricingManagerError('Invalid JSON data format.')
 
-        company = json_data.get('company', 'HAIRPRO')
-        marketplace = json_data.get('marketplace', 'BELEZA_NA_WEB')
-        integrator = json_data.get('integrator', 'ANYMARKET')
-        products_ulrs_sheet_name = json_data.get(
-            'products_ulrs_sheet_name', 'pricing'
-        )
-        skus_sellers_sheet_name = json_data.get(
-            'skus_sellers_sheet_name', 'skushairpro'
-        )
+        cls._validate_json_data(json_data)
 
-        if not all(
-            [
-                company,
-                marketplace,
-                integrator,
-                products_ulrs_sheet_name,
-                skus_sellers_sheet_name,
-            ]
-        ):
+        return cls(**json_data)
+
+    @classmethod
+    def _load_json_from_string(cls, json_string: str):
+        try:
+            return json.loads(json_string)
+        except json.JSONDecodeError:
+            raise PricingManagerError('Invalid JSON string.')
+
+    @classmethod
+    def _load_json_from_file(cls, file_path: str):
+        try:
+            with open(file_path, 'r') as file:
+                return json.load(file)
+        except (json.JSONDecodeError, FileNotFoundError):
+            raise PricingManagerError('Invalid JSON file.')
+
+    @classmethod
+    def _validate_json_data(cls, json_data: dict):
+        required_keys = [
+            'company',
+            'marketplace',
+            'integrator',
+            'gsheet_id',
+            'gsheet_name',
+        ]
+        missing_keys = [key for key in required_keys if key not in json_data]
+
+        if missing_keys:
             raise PricingManagerError(
-                "JSON file must contain 'company', 'marketplace', 'products_urls_sheet_name', 'skus_sellers_sheet_name' and 'integrator' keys."
+                f"Missing required keys in JSON data: {', '.join(missing_keys)}"
             )
-
-        return cls(
-            company=company,
-            marketplace=marketplace,
-            integrator=integrator,
-            products_ulrs_sheet_name=products_ulrs_sheet_name,
-            skus_sellers_sheet_name=skus_sellers_sheet_name,
-        )
 
     def _set_integrator_api(self):
         try:
@@ -110,52 +128,48 @@ class PricingManager:
             pricing_logger.exception(str(e))
             raise
 
-    def _get_products_from_gsheet(
-        self, sheet_id: str = ID_HAIRPRO_SHEET
-    ) -> Tuple[List[str], pd.DataFrame]:
+    def _get_products_from_gsheet(self) -> pd.DataFrame:
         try:
-            urls = gsheet.convert_range_to_dataframe(
-                sheet_id=sheet_id,
-                sheet_range=f'{self.products_ulrs_sheet_name}!A1:A',
+            products_df = self.gsheet.convert_range_to_dataframe(
+                sheet_id=self.gsheet_id,
+                sheet_range=f'{self.gsheet_name}!A1:D',
             )
-            urls = list(urls['urls'])
-            sku_sellers = gsheet.convert_range_to_dataframe(
-                sheet_id=sheet_id,
-                sheet_range=f'{self.skus_sellers_sheet_name}!A1:B',
-            )
-            sku_sellers = sku_sellers.rename(
-                columns={0: 'SKU Seller', 1: 'SKU Beleza'}
-            )
-            return urls, sku_sellers
+            return products_df
         except Exception as e:
             pricing_logger.exception(str(e))
             raise
 
-    def get_products_from_company(self) -> Tuple[List[str], pd.DataFrame]:
+    def get_products_from_company(self) -> pd.DataFrame:
         if self.company == 'HAIRPRO':
-            return self._get_products_from_gsheet(sheet_id=ID_HAIRPRO_SHEET)
+            return self._get_products_from_gsheet()
         raise ValueError(f'Unsupported company: {self.company}')
 
     @benchmark_with(pricing_logger)
     @logging_with(pricing_logger)
     def scraping_and_pricing(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         try:
-            products_urls, products_skus = self.get_products_from_company()
-            pc = Pricing()
+            products_df = self.get_products_from_company()
+            products_df = products_df[products_df['status'] == 'ATIVO']
             sc = Scraper(
-                marketplace=self.marketplace, products_urls=products_urls
+                marketplace=self.marketplace,
+                products_urls=products_df['urls'].tolist(),
             )
             sellers_list = sc.scrap_products_from_marketplace()
-            pricing_df = pc.create_dataframes(
-                sellers_list=sellers_list, skus_list=products_skus
+            pricing_df = self.pricing.create_dataframes(
+                sellers_list=sellers_list, products_df=products_df
             )
-            pricing_df = pc.drop_inactives(pricing_df)
-            func_ebitda = pc.ebitda_proccess(pricing_df)
-            df_ebitda = pc.pricing(func_ebitda)
-            df_final = pc.drop_inactives(df_ebitda)
-            columns = ['sku', 'brand', 'category', 'name', 'price', 'seller_name']
+            func_ebitda = self.pricing.ebitda_proccess(pricing_df)
+            pricing_df = self.pricing.pricing(func_ebitda)
+            columns = [
+                'sku',
+                'brand',
+                'category',
+                'name',
+                'price',
+                'seller_name',
+            ]
             sellers_df = pd.DataFrame(sellers_list, columns=columns)
-            return sellers_df, df_final[['sku (*)', 'special_price']]
+            return sellers_df, pricing_df[['sku (*)', 'special_price']]
         except Exception as e:
             pricing_logger.exception(str(e))
             raise
