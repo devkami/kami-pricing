@@ -1,8 +1,20 @@
 {
-  "company": "HAIRPRO",
-  "marketplace": "BELEZA_NA_WEB",
-  "product_urls_sheet_name":"pricing",
-  "skus_sellers_sheet_name":"skushairpro",
-  "integrator": "ANYMARKET",
-  "every_seconds": 600
+  "every_seconds": 600,
+  "manager":{
+    "company": "HAIRPRO",
+    "marketplace": "BELEZA_NA_WEB",
+    "gsheet_id":"1hoMQoRXGcWJvxVwjAY8eTYiLk778Id5ee_RKaZqAbmU",  
+    "gsheet_name":"pricing",
+    "integrator": "ANYMARKET",  
+    "pricing_engine":{
+      "multiplier_commission":  0.15,
+      "multiplier_admin":  0.05,
+      "multiplier_reverse":  0.003,
+      "limit_rate_ebitda":  4.0,
+      "increment_price_new":  0.10,
+      "gsheet_id":"1hoMQoRXGcWJvxVwjAY8eTYiLk778Id5ee_RKaZqAbmU",  
+      "gsheet_name":"pricing",   
+      "ebit_sheet_name":"ebit"
+    }
+  }
 }
