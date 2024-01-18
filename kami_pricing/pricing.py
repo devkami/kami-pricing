@@ -1,5 +1,8 @@
+import json
 import logging
+from dataclasses import dataclass, field
 from os import path
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -17,20 +20,82 @@ from kami_pricing.constant import (
 pricing_logger = logging.getLogger('pricing')
 
 
+class PricingError(Exception):
+    pass
+
+
+@dataclass
 class Pricing:
-    def __init__(
-        self,
-        multiplier_commission: float = 0.15,
-        multiplier_admin: float = 0.05,
-        multiplier_reverse: float = 0.003,
-        limit_rate_ebitda: float = 4.0,
-        increment_price_new: float = 0.10,
-    ):
-        self.multiplier_commission = multiplier_commission
-        self.multiplier_admin = multiplier_admin
-        self.multiplier_reverse = multiplier_reverse
-        self.limit_rate_ebitda = limit_rate_ebitda
-        self.increment_price_new = increment_price_new
+    multiplier_commission: float = (0.15,)
+    multiplier_admin: float = (0.05,)
+    multiplier_reverse: float = (0.003,)
+    limit_rate_ebitda: float = (4.0,)
+    increment_price_new: float = (0.10,)
+    gsheet_id: str = (ID_HAIRPRO_SHEET,)
+    gsheet_name: str = ('pricing',)
+    ebit_sheet_name: str = ('ebit',)
+    gsheet: KamiGsheet = field(init=False)
+
+    def __post_init__(self):
+        self.gsheet = KamiGsheet(
+            api_version='v4', credentials_path=GOOGLE_API_CREDENTIALS
+        )
+
+    @classmethod
+    def _validate_json_data(cls, json_data: dict):
+        required_keys = [
+            'multiplier_commission',
+            'multiplier_admin',
+            'multiplier_reverse',
+            'limit_rate_ebitda',
+            'increment_price_new',
+            'gsheet_id',
+            'gsheet_name',
+            'ebit_sheet_name',
+        ]
+        missing_keys = [key for key in required_keys if key not in json_data]
+        if missing_keys:
+            raise PricingError(
+                f"JSON data must contain the following keys: {', '.join(missing_keys)}"
+            )
+
+    @classmethod
+    def _load_json_from_file(cls, file_path: str):
+        try:
+            with open(file_path, 'r') as json_file:
+                json_data = json.load(json_file)
+        except Exception as e:
+            raise PricingError(f'Failed to load JSON file: {e}')
+        return json_data
+
+    @classmethod
+    def _load_json_from_string(cls, json_string: str):
+        try:
+            json_data = json.loads(json_string)
+        except Exception as e:
+            raise PricingError(f'Failed to load JSON string: {e}')
+        return json_data
+
+    @classmethod
+    def from_json(cls, json_data: Union[str, dict]):
+        if isinstance(json_data, str) and path.isfile(json_data):
+            try:
+                json_data = cls._load_json_from_file(json_data)
+            except PricingError as e:
+                raise e
+        elif isinstance(json_data, str):
+            try:
+                json_data = cls._load_json_from_string(json_data)
+            except PricingError as e:
+                raise e
+        elif isinstance(json_data, dict):
+            pass
+        else:
+            raise PricingError('Invalid JSON data format.')
+
+        cls._validate_json_data(json_data)
+
+        return cls(**json_data)
 
     def calc_ebitda(self, df: pd.DataFrame) -> pd.DataFrame:
         try:
@@ -68,9 +133,6 @@ class Pricing:
     @logging_with(pricing_logger)
     def pricing(self, df: pd.DataFrame) -> pd.DataFrame:
         df = self.calc_ebitda(df)
-        if df is None:
-            return None
-
         try:
             for idx in range(0, len(df['special_price'])):
                 while df.loc[idx, 'EBITDA %'] < self.limit_rate_ebitda:
@@ -109,18 +171,20 @@ class Pricing:
                     pricing_logger.info(
                         f"The sku {df.loc[idx, 'sku (*)']} with a price of {df.loc[idx, 'special_price']} has an ebitda of {df.loc[idx, 'EBITDA %']}"
                     )
-            return df
         except Exception as e:
             pricing_logger.error(f'An unexpected error occurred: {str(e)}')
             return None
 
+        return df
+
     @benchmark_with(pricing_logger)
     @logging_with(pricing_logger)
-    def create_dataframes(self, sellers_list, skus_list) -> pd.DataFrame:
+    def create_dataframes(
+        self, sellers_list: list, products_df: pd.DataFrame
+    ) -> pd.DataFrame:
         df_sellers_df_list = pd.DataFrame(
             sellers_list, columns=COLUMNS_ALL_SELLER
         )
-        skus_df = pd.DataFrame(skus_list)
         df_sellers_df_list.drop_duplicates(keep='first', inplace=True)
         df_sellers_df_list['seller_name'] = df_sellers_df_list[
             'seller_name'
@@ -192,8 +256,8 @@ class Pricing:
                     difference_price_df['ganho_%'].round(2) * 100
                 )
 
-        sku_sellers = skus_df.rename(
-            columns={'SKU Seller': 'sku_kami', 'SKU Beleza': 'sku'}
+        sku_sellers = products_df.rename(
+            columns={'sku_seller': 'sku_kami', 'sku_beleza': 'sku'}
         )
         sku_sellers = sku_sellers[['sku', 'sku_kami']]
         pricing_result = difference_price_df.merge(sku_sellers, how='left')
@@ -210,17 +274,15 @@ class Pricing:
     @benchmark_with(pricing_logger)
     @logging_with(pricing_logger)
     def ebitda_proccess(self, df: pd.DataFrame):
-        kg = KamiGsheet(
-            api_version='v4',
-            credentials_path=GOOGLE_API_CREDENTIALS,
-        )
-        kg.clear_range(ID_HAIRPRO_SHEET, 'ebit!A2:B')
+        self.gsheet.clear_range(self.gsheet_id, f'{self.ebit_sheet_name}!A2:B')
 
         df = df[['sku (*)', 'special_price']]
 
-        kg.append_dataframe(df, ID_HAIRPRO_SHEET, 'ebit!A2:B')
-        df_ebitda = kg.convert_range_to_dataframe(
-            ID_HAIRPRO_SHEET, 'ebit!A1:E'
+        self.gsheet.append_dataframe(
+            df, self.gsheet_id, f'{self.ebit_sheet_name}!A2:B'
+        )
+        df_ebitda = self.gsheet.convert_range_to_dataframe(
+            self.gsheet_id, f'{self.ebit_sheet_name}!A1:E'
         )
         df_ebitda = df_ebitda.replace('None', np.nan)
 
@@ -232,26 +294,3 @@ class Pricing:
         )
 
         return df_ebitda
-
-    def drop_inactives(self, df: pd.DataFrame):
-        kg = KamiGsheet(
-            api_version='v4',
-            credentials_path=GOOGLE_API_CREDENTIALS,
-        )
-
-        df_active = kg.convert_range_to_dataframe(
-            ID_HAIRPRO_SHEET, 'pricing_teste!A1:B'
-        )
-
-        df_inactives = df_active.loc[df_active['status'] == 'INATIVO']
-
-        try:
-            to_drop_pricing = []
-            for sku in df_inactives['sku']:
-                to_drop_pricing.extend(df.loc[df['sku (*)'] == sku].index)
-            df = df.drop(to_drop_pricing)
-
-            return df
-        except Exception as e:
-            pricing_logger.exception(str(e))
-            return None
