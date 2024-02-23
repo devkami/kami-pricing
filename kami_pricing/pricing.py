@@ -19,10 +19,10 @@ pricing_logger = logging.getLogger('pricing')
 class Pricing:
     def __init__(
         self,
-        multiplier_commission: float = 0.15,
+        multiplier_commission: float = 0.22,
         multiplier_admin: float = 0.05,
         multiplier_reverse: float = 0.003,
-        limit_rate_ebitda: float = 4.0,
+        limit_rate_ebitda: float = 3.99,
         increment_price_new: float = 0.10,
     ):
         self.multiplier_commission = multiplier_commission

@@ -12,5 +12,5 @@ services:
       - ./credentials:/app/credentials
       - ./settings:/app/settings
       - ./messages:/app/messages
-      - ./reports:/app/reports
+      - ./reports:/app/reports      
     restart: always

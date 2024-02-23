@@ -65,7 +65,6 @@ class Scraper:
                         row['seller']['name'],
                     ]
                     sellers_list.append(sellers_row)
-
             return sellers_list
 
         except requests.RequestException as e:

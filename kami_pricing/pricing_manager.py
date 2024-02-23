@@ -31,7 +31,7 @@ class PricingManager:
         company: str = 'HAIRPRO',
         marketplace: str = 'BELEZA_NA_WEB',
         integrator: str = 'PLUGG_TO',
-        products_ulrs_sheet_name: str = 'pricing_teste',
+        products_ulrs_sheet_name: str = 'pricing',
         skus_sellers_sheet_name: str = 'skushairpro',
     ):
         self.company = company
@@ -150,8 +150,11 @@ class PricingManager:
                 sellers_list=sellers_list, skus_list=products_skus
             )
             pricing_df = pc.drop_inactives(pricing_df)
+            df_wella = pricing_df[pricing_df['sku (*)'].str.startswith('WL')]
+            pricing_df = pricing_df[~pricing_df['sku (*)'].str.startswith('WL')]
             func_ebitda = pc.ebitda_proccess(pricing_df)
             df_ebitda = pc.pricing(func_ebitda)
+            df_ebitda = pd.concat([df_ebitda, df_wella], ignore_index=True)
             df_final = pc.drop_inactives(df_ebitda)
             columns = ['sku', 'brand', 'category', 'name', 'price', 'seller_name']
             sellers_df = pd.DataFrame(sellers_list, columns=columns)

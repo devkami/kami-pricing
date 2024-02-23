@@ -34,8 +34,10 @@ def _remove_files_from(folder_path):
 
 
 def update_prices():
+    pricing_logger.info('Updating prices...')
     pricing_manager = PricingManager.from_json(file_path=PRICING_MANAGER_FILE)
     scraping_df, pricing_df = pricing_manager.scraping_and_pricing()
+    pricing_df = pricing_df.sort_values(by='sku (*)', ascending=False)
     _remove_files_from(reports_folder)
     pricing_df.to_excel(
         reports_folder + '/novos_precos.xlsx', index=False, engine='openpyxl'
@@ -43,10 +45,12 @@ def update_prices():
     scraping_df.to_excel(
         reports_folder + '/concorrentes.xlsx', index=False, engine='openpyxl'
     )
+    pricing_df = pricing_df[['sku (*)', 'special_price']]
     pricing_manager.update_prices(pricing_df=pricing_df)
 
 
 def send_emails():
+    pricing_logger.info('Sending emails...')
     reports = _get_files_from(reports_folder)
     send_email_by_group(
         template_name='pricing',

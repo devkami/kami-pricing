@@ -9,18 +9,30 @@
         "name": "Rogerio Casado",
         "phone": "+5511991674725",
         "email": "rogerio.casado@kamico.com.br",
-        "groups": ["pricing"]
+        "groups": []
     },
     {
         "name": "Maicon de Menezes Oliveira",
         "phone": "+5521983144824",
         "email": "maicon@kamico.com.br",
-        "groups": []
+        "groups": [""]
     },
     {
         "name": "Gustavo Lima",
         "phone": "+5511949350118",
         "email": "gustavo@kamico.com.br",
+        "groups": ["pricing"]
+    },
+    {
+        "name": "Valéria",
+        "phone": "+5511942177683",
+        "email": "valeria@kamico.com.br",
+        "groups": ["pricing"]
+    },
+    {
+        "name": "Jacqueline",
+        "phone": "+5511981224319",
+        "email": "jacqueline@kamico.com.br",
         "groups": ["pricing"]
     }
 ]
