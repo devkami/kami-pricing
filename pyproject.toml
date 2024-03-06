@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kami-pricing"
-version = "0.3.3"
+version = "0.3.4"
 description = "Pricing tool to acquire the best positioning without losing profit margin in different marketplaces, using the ANYMARKET API or PLUGG.TO API"
 authors = ["Maicon de Menezes <maicondmenezes@gmail.com>", "Gustavo Lima <gustavasd@gmail.com>", "Marcos Madeira <mmadeirasilva5@gmail.com>"]
 readme = "README.md"
