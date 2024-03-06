@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from kami_pricing.api.anymarket import AnymarketAPIError
 from kami_pricing.pricing_manager import PricingManager
 
 
@@ -27,9 +26,24 @@ class TestPricingManager(unittest.TestCase):
         mock_scraper = MockScraper.return_value
         mock_pricing = MockPricing.return_value
 
-        mock_scraper.scrap_products_from_marketplace.return_value = (
-            'mocked_sellers_list'
-        )
+        mock_scraper.scrap_products_from_marketplace.return_value = [
+            {
+                'sku': 'sku1',
+                'brand': 'brand1',
+                'category': 'category1',
+                'name': 'name1',
+                'price': 100,
+                'seller_name': 'seller_name1',
+            },
+            {
+                'sku': 'sku2',
+                'brand': 'brand2',
+                'category': 'category2',
+                'name': 'name2',
+                'price': 200,
+                'seller_name': 'seller_name2',
+            },
+        ]
         mock_pricing.create_dataframes.return_value = MagicMock()
         mock_pricing.drop_inactives.return_value = MagicMock()
         mock_pricing.ebitda_proccess.return_value = MagicMock()

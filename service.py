@@ -30,7 +30,9 @@ def _remove_files_from(folder_path):
             remove(file_path)
 
         except Exception as e:
-            pricing_logger.error(f'Failed to delete {file_path}. Reason: {str(e)}')
+            pricing_logger.error(
+                f'Failed to delete {file_path}. Reason: {str(e)}'
+            )
 
 
 def update_prices():
@@ -62,7 +64,7 @@ def send_emails():
     _remove_files_from(reports_folder)
 
 
-def main():    
+def main():
     update_prices()
     send_emails()
 
@@ -71,7 +73,7 @@ def main():
         secs = json_data.get('every_seconds')
 
     schedule.every(secs).seconds.do(update_prices)
-    schedule.every(secs*1.2).seconds.do(send_emails)
+    schedule.every(secs * 1.2).seconds.do(send_emails)
 
     while True:
         try:

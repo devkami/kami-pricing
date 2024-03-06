@@ -77,12 +77,11 @@ def generate_message_by_template(
     )
 
 
-def send_email(message: Message, attachments: List[str] = []):    
+def send_email(message: Message, attachments: List[str] = []):
     login = str(getenv('EMAIL_USER'))
     password = str(getenv('EMAIL_PASSWORD'))
     message.sender = login
     email_messenger_str = {
-        
         'name': 'Email - kamico.com.br',
         'messages': [message],
         'credentials': {
@@ -91,7 +90,7 @@ def send_email(message: Message, attachments: List[str] = []):
         },
         'engine': '',
     }
-    email_messenger = EmailMessenger(**email_messenger_str)    
+    email_messenger = EmailMessenger(**email_messenger_str)
     email_messenger.sendMessage(attachments=attachments)
 
 
@@ -164,5 +163,5 @@ def send_email_by_group(
         message = generate_message_by_template(
             template_name, contact, message_dict
         )
-        message.recipients = [contact.email]        
+        message.recipients = [contact.email]
         send_email(message=message, attachments=attachments)

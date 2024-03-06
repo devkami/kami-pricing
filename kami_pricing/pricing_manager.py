@@ -151,9 +151,16 @@ class PricingManager:
             )
             pricing_df = pc.drop_inactives(pricing_df)
             func_ebitda = pc.ebitda_proccess(pricing_df)
-            df_ebitda = pc.pricing(func_ebitda)            
+            df_ebitda = pc.pricing(func_ebitda)
             df_final = pc.drop_inactives(df_ebitda)
-            columns = ['sku', 'brand', 'category', 'name', 'price', 'seller_name']
+            columns = [
+                'sku',
+                'brand',
+                'category',
+                'name',
+                'price',
+                'seller_name',
+            ]
             sellers_df = pd.DataFrame(sellers_list, columns=columns)
             return sellers_df, df_final[['sku (*)', 'special_price']]
         except Exception as e:

@@ -1,6 +1,6 @@
 import json
 import logging
-from os import path
+from os import PathLike, path
 from typing import Dict, List
 
 import httpx
@@ -33,6 +33,11 @@ class AnymarketAPI:
         self.result = None
 
     def _set_credentials(self):
+
+        if not isinstance(self.credentials_path, (str, PathLike)):
+            raise TypeError(
+                f'credentials_path must be a string or PathLike, got {type(self.credentials_path).__name__} instead.'
+            )
         try:
             with open(self.credentials_path, 'r') as f:
                 self.credentials = json.load(f)
@@ -278,6 +283,10 @@ class AnymarketAPI:
             anymarket_api_logger.exception(str(e))
 
     def update_price(self, ad_id: str, new_price: float):
+        if round(new_price, 2) != new_price:
+            raise AnymarketAPIError(
+                f'New Price: {new_price} must have at most 2 decimal places'
+            )
         payload = {
             'id': ad_id,
             'price': new_price,
