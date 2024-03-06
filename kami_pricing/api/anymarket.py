@@ -340,8 +340,9 @@ class AnymarketAPI:
                 marketplace_ad = self.get_first_ad_of_marketplace(
                     ads=ads, marketplace=marketplace
                 )
+                formatted_price = f"{row['special_price']:.2f}"
                 self.update_price(
-                    ad_id=marketplace_ad['id'], new_price=row['special_price']
+                    ad_id=marketplace_ad['id'], new_price=formatted_price
                 )
             except Exception as e:
                 anymarket_api_logger.exception(str(e))
