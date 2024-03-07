@@ -18,7 +18,7 @@ RUN pip install --upgrade pip
 COPY ./requirements.txt /usr/src/app/requirements.txt
 RUN pip install -r requirements.txt
 
-COPY service.py .env /usr/src/app/
+COPY service.py /usr/src/app/
 COPY credentials /usr/src/app/credentials
 COPY settings /usr/src/app/settings
 COPY messages /usr/src/app/messages
