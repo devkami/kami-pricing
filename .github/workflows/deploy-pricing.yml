@@ -1,4 +1,4 @@
-name: Deploy Provider to Docker Hub
+name: Deploy Kami Pricing to Docker Hub
 
 on:
   push:
@@ -20,7 +20,8 @@ jobs:
       - name: Generate Requirements File
         run: |
           pip install poetry
-          poetry export -f requirements.txt --without-hashes --without dev --without doc        
+          poetry export -f requirements.txt --output requirements.txt --without-hashes --without dev --without doc
+        working-directory: .
 
       - name: Install Dependencies
         run: |
@@ -47,5 +48,5 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            maicondmenezesoliveira/kami-pricing-manager:latest
-            maicondmenezesoliveira/kami-pricing-manager:${{ env.APP_VERSION }}
+            devkamico/kami-pricing:latest
+            devkamico/kami-pricing:${{ env.APP_VERSION }}
