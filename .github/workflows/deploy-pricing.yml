@@ -50,3 +50,7 @@ jobs:
           tags: |
             devkamico/kami-pricing:latest
             devkamico/kami-pricing:${{ env.APP_VERSION }}
+          build-args: |
+            EMAIL_USER=${{ secrets.EMAIL_USER }}
+            EMAIL_PASS=${{ secrets.EMAIL_PASS }}
+            BOTCONVERSA_API_KEY=${{ secrets.BOTCONVERSA_API_KEY }}

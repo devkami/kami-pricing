@@ -79,7 +79,7 @@ def generate_message_by_template(
 
 def send_email(message: Message, attachments: List[str] = []):
     login = str(getenv('EMAIL_USER'))
-    password = str(getenv('EMAIL_PASSWORD'))
+    password = str(getenv('EMAIL_PASS'))
     message.sender = login
     email_messenger_str = {
         'name': 'Email - kamico.com.br',
