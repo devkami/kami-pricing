@@ -1,0 +1,3 @@
+[submodule "kami_pricing/scraper"]
+	path = kami_pricing/scraper
+	url = https://github.com/devkami/kami-pricing-scraper.git
